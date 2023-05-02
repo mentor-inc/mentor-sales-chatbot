@@ -10,7 +10,7 @@ import {
 import { useChatStore } from "../store";
 
 import Locale from "../locales";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Path } from "../constant";
 
 export function ChatItem(props: {
@@ -60,14 +60,14 @@ export function ChatItem(props: {
 }
 
 export function ChatList(props: { narrow?: boolean }) {
-  const [sessions, selectedIndex, selectSession, removeSession, moveSession] =
-    useChatStore((state) => [
+  const [sessions, selectedIndex, selectSession, moveSession] = useChatStore(
+    (state) => [
       state.sessions,
       state.currentSessionIndex,
       state.selectSession,
-      state.removeSession,
       state.moveSession,
-    ]);
+    ],
+  );
   const chatStore = useChatStore();
   const navigate = useNavigate();
 
