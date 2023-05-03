@@ -65,7 +65,12 @@ function createEmptySession(): ChatSession {
     topic: DEFAULT_TOPIC,
     sendMemory: true,
     memoryPrompt: "",
-    context: [],
+    context: [
+      createMessage({
+        role: "system",
+        content: Locale.Store.Prompt.System,
+      }),
+    ],
     messages: [],
     stat: {
       tokenCount: 0,
@@ -232,7 +237,7 @@ export const useChatStore = create<ChatStore>()(
           session.lastUpdate = new Date().toLocaleString();
         });
         get().updateStat(message);
-        get().summarizeSession();
+        // get().summarizeSession();
       },
 
       async onUserInput(content) {
@@ -248,7 +253,7 @@ export const useChatStore = create<ChatStore>()(
           model: useAppConfig.getState().modelConfig.model,
         });
 
-        // get recent messages
+        // get recent messages and shallowy clone the array
         const recentMessages = get().getMessagesWithMemory();
         const sendMessages = recentMessages.concat(userMessage);
         const sessionIndex = get().currentSessionIndex;

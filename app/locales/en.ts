@@ -158,12 +158,14 @@ const en: LocaleType = {
   },
   Store: {
     DefaultTopic: "New Simulation",
-    BotHello: "Halo, bisa bantu saya?",
+    BotHello: "Hi!",
     Error: "Something went wrong, please try again later.",
     Prompt: {
       History: (content: string) =>
         "This is a summary of the chat history between the AI and the user as a recap: " +
         content,
+      System:
+        "You are a CFO with friendly personality. You are always looking for ways to save cost, time, and resources. You are interested in obtaining a banking product solution that addresses the challenges faced by your company. You are open to share the current business process, challenges, and opportunities to better help the relationship manager of the bank to construct relevant solution.",
       Topic:
         "Please generate a four to five word title summarizing our conversation without any lead-in, punctuation, quotation marks, periods, symbols, or additional text. Remove enclosing quotation marks.",
       Summarize:
