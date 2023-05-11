@@ -46,9 +46,16 @@ export interface ChatSession {
   memoryPrompt: string;
   context: Message[];
   messages: Message[];
+  feedback: Feedback[];
   stat: ChatStat;
   lastUpdate: string;
   lastSummarizeIndex: number;
+}
+
+export interface Feedback {
+  score: number;
+  explanation: string;
+  toImprove: string | null;
 }
 
 const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
@@ -72,6 +79,7 @@ function createEmptySession(): ChatSession {
       }),
     ],
     messages: [],
+    feedback: [],
     stat: {
       tokenCount: 0,
       wordCount: 0,
@@ -95,6 +103,7 @@ interface ChatStore {
   onNewMessage: (message: Message) => void;
   onUserInput: (content: string) => Promise<void>;
   summarizeSession: () => void;
+  getFeedback: (messages: Message[]) => void;
   updateStat: (message: Message) => void;
   updateCurrentSession: (updater: (session: ChatSession) => void) => void;
   updateMessage: (
@@ -237,7 +246,20 @@ export const useChatStore = create<ChatStore>()(
           session.lastUpdate = new Date().toLocaleString();
         });
         get().updateStat(message);
-        // get().summarizeSession();
+        get().summarizeSession();
+      },
+
+      async getFeedback(messages) {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          body: JSON.stringify({
+            messages,
+          }),
+        });
+        const json = await res.json();
+        get().updateCurrentSession((session) => {
+          session.feedback.push(json.score);
+        });
       },
 
       async onUserInput(content) {
@@ -258,6 +280,18 @@ export const useChatStore = create<ChatStore>()(
         const sendMessages = recentMessages.concat(userMessage);
         const sessionIndex = get().currentSessionIndex;
         const messageIndex = get().currentSession().messages.length + 1;
+
+        let msgToGetFeedback = sendMessages.slice(1); // remove system message
+        if (msgToGetFeedback.length === 1) {
+          msgToGetFeedback = [
+            createMessage({ role: "assistant", content: "Hi" }),
+            ...msgToGetFeedback,
+          ];
+        } else {
+          msgToGetFeedback = msgToGetFeedback.slice(-2); // get the last 2 messages only
+        }
+
+        get().getFeedback(msgToGetFeedback);
 
         // save user's and bot's message
         get().updateCurrentSession((session) => {
@@ -390,20 +424,20 @@ export const useChatStore = create<ChatStore>()(
         const session = get().currentSession();
 
         // should summarize topic after chating more than 50 words
-        const SUMMARIZE_MIN_LEN = 50;
-        if (
-          session.topic === DEFAULT_TOPIC &&
-          countMessages(session.messages) >= SUMMARIZE_MIN_LEN
-        ) {
-          requestWithPrompt(session.messages, Locale.Store.Prompt.Topic, {
-            model: "gpt-3.5-turbo",
-          }).then((res) => {
-            get().updateCurrentSession(
-              (session) =>
-                (session.topic = res ? trimTopic(res) : DEFAULT_TOPIC),
-            );
-          });
-        }
+        // const SUMMARIZE_MIN_LEN = 50;
+        // if (
+        //   session.topic === DEFAULT_TOPIC &&
+        //   countMessages(session.messages) >= SUMMARIZE_MIN_LEN
+        // ) {
+        //   requestWithPrompt(session.messages, Locale.Store.Prompt.Topic, {
+        //     model: "gpt-3.5-turbo",
+        //   }).then((res) => {
+        //     get().updateCurrentSession(
+        //       (session) =>
+        //         (session.topic = res ? trimTopic(res) : DEFAULT_TOPIC),
+        //     );
+        //   });
+        // }
 
         const config = useAppConfig.getState();
         let toBeSummarizedMsgs = session.messages.slice(

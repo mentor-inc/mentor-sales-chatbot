@@ -140,9 +140,6 @@
   overflow: auto;
 }
 
-.chat-list {
-}
-
 .chat-item {
   padding: 10px 14px;
   background-color: var(--white);
@@ -351,6 +348,27 @@
   color: #aaa;
   line-height: 1.5;
   margin-top: 5px;
+}
+
+.chat-message-feedback {
+  font-size: 14px;
+  color: var(--color-fg-default);
+  
+  .chat-message-feedback-title {
+    font-family: inherit;
+    color: var(--primary);
+    padding: 12px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    margin-left: -12px;
+    margin-bottom: -8px;
+  }
+
+  .chat-message-feedback-section-title {
+    font-weight: bold;
+    margin-top: 10px;
+  }
 }
 
 .user-avtar {

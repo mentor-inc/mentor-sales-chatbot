@@ -30,6 +30,7 @@ import {
   Theme,
   ModelType,
   useAppConfig,
+  Feedback,
 } from "../store";
 
 import {
@@ -421,6 +422,7 @@ export function Chat() {
   const context: RenderMessage[] = session.context.slice();
 
   const accessStore = useAccessStore();
+  const feedback = session.feedback ?? [];
 
   if (session.messages.at(0)?.content !== BOT_HELLO.content) {
     const copiedHello = Object.assign({}, BOT_HELLO);
@@ -487,9 +489,16 @@ export function Chat() {
           >
             {session.topic}
           </div>
-          <div className={styles["window-header-sub-title"]}>
-            {Locale.Chat.SubTitle(session.messages.length)}
-          </div>
+          {feedback.length > 0 && (
+            <div className={styles["window-header-sub-title"]}>
+              {Locale.Chat.SubTitle(
+                Math.floor(
+                  feedback.reduce((sum, f) => sum + f.score, 0) /
+                    feedback.length,
+                ),
+              )}
+            </div>
+          )}
         </div>
         <div className={styles["window-actions"]}>
           <div className={styles["window-action-button"] + " " + styles.mobile}>
@@ -554,6 +563,8 @@ export function Chat() {
             i > 0 &&
             !(message.preview || message.content.length === 0);
           const showTyping = message.preview || message.streaming;
+
+          const fb = feedback[Math.floor(i / 2)];
 
           return (
             <div
@@ -620,6 +631,7 @@ export function Chat() {
                     fontSize={fontSize}
                     parentRef={scrollRef}
                   />
+                  {isUser && fb && <FeedbackSection data={fb} />}
                 </div>
                 {!isUser && !message.preview && (
                   <div className={styles["chat-message-actions"]}>
@@ -667,6 +679,38 @@ export function Chat() {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+function FeedbackSection(props: { data: Feedback }) {
+  const [isOpen, setOpen] = useState(false);
+  return (
+    <div className={styles["chat-message-feedback"]}>
+      <button
+        className={styles["chat-message-feedback-title"]}
+        onClick={() => setOpen(!isOpen)}
+      >
+        {isOpen ? "Hide Feedback" : "Show Feedback"}
+      </button>
+      {isOpen ? (
+        <div>
+          <div className={styles["chat-message-feedback-section-title"]}>
+            Score
+          </div>
+          <div>{props.data.score}</div>
+
+          <div className={styles["chat-message-feedback-section-title"]}>
+            Explanation
+          </div>
+          <div>{props.data.explanation}</div>
+
+          <div className={styles["chat-message-feedback-section-title"]}>
+            Improvement
+          </div>
+          <div>{props.data.toImprove ?? "-"}</div>
+        </div>
+      ) : null}
     </div>
   );
 }
