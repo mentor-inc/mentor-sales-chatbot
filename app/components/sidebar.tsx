@@ -104,6 +104,7 @@ export function SideBar(props: { className?: string }) {
           }
         }}
       >
+        <p style={{ fontSize: 12 }}>2 / 3 Simulations Remaining</p>
         <ChatList narrow={shouldNarrow} />
       </div>
 
