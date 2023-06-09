@@ -6,6 +6,7 @@ import { IconButton } from "./button";
 import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
 import CloseIcon from "../icons/close.svg";
+import ShareIcon from "../icons/share.svg";
 import Locale from "../locales";
 
 import { useAppConfig, useChatStore } from "../store";
@@ -20,6 +21,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useMobileScreen } from "../utils";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
+import { get, set } from "idb-keyval";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ChatList = dynamic(async () => (await import("./chat-list")).ChatList, {
   loading: () => null,
@@ -80,6 +84,17 @@ export function SideBar(props: { className?: string }) {
   const { onDragMouseDown, shouldNarrow } = useDragSideBar();
   const navigate = useNavigate();
 
+  const searchParams = useSearchParams();
+  const accessCode = searchParams.get("code");
+  const { data, status, takeSimCount } = useSimCount(accessCode);
+
+  function renderSimCount() {
+    if (status === "success" && data !== -1) {
+      return <p style={{ fontSize: 12 }}>{data} / 3 Simulations Remaining</p>;
+    }
+    return null;
+  }
+
   return (
     <div
       className={`${styles.sidebar} ${props.className} ${
@@ -104,7 +119,7 @@ export function SideBar(props: { className?: string }) {
           }
         }}
       >
-        <p style={{ fontSize: 12 }}>2 / 3 Simulations Remaining</p>
+        {renderSimCount()}
         <ChatList narrow={shouldNarrow} />
       </div>
 
@@ -117,14 +132,23 @@ export function SideBar(props: { className?: string }) {
             />
           </div>
         </div>
-        <div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <IconButton
+            disabled={!data || data < 1}
             icon={<AddIcon />}
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
             onClick={() => {
               chatStore.newSession();
+              takeSimCount();
             }}
             shadow
+          />
+          <IconButton
+            text="Contact Us for Full Access"
+            className={styles["sidebar-contact-btn"]}
+            onClick={() => {
+              window.open("https://www.mentorinc.io/en/corporate");
+            }}
           />
         </div>
       </div>
@@ -135,4 +159,58 @@ export function SideBar(props: { className?: string }) {
       ></div>
     </div>
   );
+}
+
+async function fetchSimCount(code: string | null): Promise<number> {
+  if (!code) {
+    return -1;
+  }
+  const val = Number(await get(code));
+  if (Number.isNaN(val)) {
+    return -1;
+  } else {
+    return val;
+  }
+}
+
+async function setSimCount(code: string, remaining: number) {
+  await set(code, remaining);
+}
+
+function useSimCount(code: string | null) {
+  const queryData = useQuery({
+    queryKey: [code],
+    queryFn: ({ queryKey }) => fetchSimCount(queryKey[0]),
+  });
+
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ code, remaining }: any) => {
+      return setSimCount(code, remaining);
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: [code] });
+    },
+  });
+  const simCount = queryData.data;
+  const status = queryData.status;
+  useEffect(() => {
+    if (status === "success") {
+      if (simCount === -1 && typeof code === "string") {
+        mutation.mutate({ code, remaining: 2 });
+        localStorage.clear();
+      }
+    }
+  }, [simCount, status, code]);
+
+  return {
+    ...queryData,
+    takeSimCount() {
+      if (!simCount || simCount === 0) {
+        return;
+      }
+      mutation.mutate({ code, remaining: simCount - 1 });
+    },
+  };
 }

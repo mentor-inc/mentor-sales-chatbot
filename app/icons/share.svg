@@ -4,10 +4,10 @@
     <rect id="path_0" x="0" y="0" width="16" height="16" />
   </defs>
   <g opacity="1" transform="translate(0 0)  rotate(0 8 8)">
-    <mask id="bg-mask-0" fill="white">
+    <mask id="bg-mask-0" fill="currentColor">
       <use xlink:href="#path_0"></use>
     </mask>
-    <g mask="url(#bg-mask-0)">
+    <g mask="currentColor">
       <path id="路径 1"
         style="stroke:#333333; stroke-width:1.3333333333333333; stroke-opacity:1; stroke-dasharray:0 0"
         transform="translate(2 1.3333333333333333)  rotate(0 6.333333333333333 6.5)"

@@ -2,7 +2,7 @@
 
 require("../polyfill");
 
-import { useState, useEffect, StyleHTMLAttributes } from "react";
+import { useState, useEffect, StyleHTMLAttributes, useMemo } from "react";
 
 import styles from "./home.module.scss";
 
@@ -24,6 +24,7 @@ import {
 } from "react-router-dom";
 import { SideBar } from "./sidebar";
 import { useAppConfig } from "../store/config";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -123,6 +124,9 @@ function MobileScreen() {
 export function Home() {
   const isMobileScreen = useMobileScreen();
   useSwitchTheme();
+  const queryClient = useMemo(() => {
+    return new QueryClient();
+  }, []);
 
   if (!useHasHydrated()) {
     return <Loading />;
@@ -130,7 +134,9 @@ export function Home() {
 
   return (
     <ErrorBoundary>
-      <Router>{isMobileScreen ? <MobileScreen /> : <WideScreen />}</Router>
+      <QueryClientProvider client={queryClient}>
+        <Router>{isMobileScreen ? <MobileScreen /> : <WideScreen />}</Router>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

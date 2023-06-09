@@ -50,9 +50,9 @@ export function ChatItem(props: {
             </>
           )}
 
-          <div className={styles["chat-item-delete"]} onClick={props.onDelete}>
+          {/* <div className={styles["chat-item-delete"]} onClick={props.onDelete}>
             <DeleteIcon />
-          </div>
+          </div> */}
         </div>
       )}
     </Draggable>
