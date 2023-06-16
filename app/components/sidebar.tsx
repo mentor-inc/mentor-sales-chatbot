@@ -24,6 +24,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { get, set } from "idb-keyval";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { showModal } from "./ui-lib";
 
 const ChatList = dynamic(async () => (await import("./chat-list")).ChatList, {
   loading: () => null,
@@ -138,8 +139,29 @@ export function SideBar(props: { className?: string }) {
             icon={<AddIcon />}
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
             onClick={() => {
-              chatStore.newSession();
-              takeSimCount();
+              showModal({
+                title: "Select scenario",
+                children: (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <Scenario title="Relationship Manager">
+                      You are a Relationship Manager. Answer your client
+                      inquiries.
+                    </Scenario>
+                    <Scenario title="People Manager">
+                      You are a People Manager. Communicate performance review
+                      results to your direct report.
+                    </Scenario>
+                  </div>
+                ),
+              });
+              // chatStore.newSession();
+              // takeSimCount();
             }}
             shadow
           />
@@ -157,6 +179,40 @@ export function SideBar(props: { className?: string }) {
         className={styles["sidebar-drag"]}
         onMouseDown={(e) => onDragMouseDown(e as any)}
       ></div>
+    </div>
+  );
+}
+
+function Scenario({ children, onSelect, title }: any) {
+  return (
+    <div
+      className=""
+      style={{
+        flex: 1,
+        border: "1px solid white",
+        borderRadius: 6,
+        display: "flex",
+        flexDirection: "column",
+        paddingInline: 12,
+        paddingBlock: 12,
+      }}
+    >
+      <div style={{ fontSize: 16, fontWeight: "bold" }}>{title}</div>
+      <div style={{ fontSize: 16, marginTop: 4, flex: 1 }}>{children}</div>
+      <button
+        className="clickable"
+        style={{
+          background: "var(--primary)",
+          padding: 12,
+          border: "none",
+          borderRadius: 6,
+          marginTop: 12,
+          fontSize: 14,
+        }}
+        onClick={onSelect}
+      >
+        Select
+      </button>
     </div>
   );
 }
