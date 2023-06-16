@@ -2,12 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { type ChatCompletionResponseMessage } from "openai";
-import {
-  ControllerPool,
-  requestChatStream,
-  requestWithPrompt,
-} from "../requests";
-import { isMobileScreen, trimTopic } from "../utils";
+import { ControllerPool, requestChatStream } from "../requests";
+import { isMobileScreen } from "../utils";
 
 import Locale from "../locales";
 import { showToast } from "../components/ui-lib";
@@ -39,6 +35,8 @@ export interface ChatStat {
   charCount: number;
 }
 
+type Scenario = "rm" | "pm";
+
 export interface ChatSession {
   id: number;
   topic: string;
@@ -50,6 +48,7 @@ export interface ChatSession {
   stat: ChatStat;
   lastUpdate: string;
   lastSummarizeIndex: number;
+  scenario: Scenario;
 }
 
 export interface Feedback {
@@ -64,7 +63,7 @@ export const BOT_HELLO: Message = createMessage({
   content: Locale.Store.BotHello,
 });
 
-function createEmptySession(): ChatSession {
+function createEmptySession(scenario: Scenario = "rm"): ChatSession {
   const createDate = new Date().toLocaleString();
 
   return {
@@ -75,7 +74,10 @@ function createEmptySession(): ChatSession {
     context: [
       createMessage({
         role: "system",
-        content: Locale.Store.Prompt.System,
+        content:
+          scenario === "pm"
+            ? Locale.Store.Prompt.SystemPM
+            : Locale.Store.Prompt.System,
       }),
     ],
     messages: [],
@@ -87,6 +89,7 @@ function createEmptySession(): ChatSession {
     },
     lastUpdate: createDate,
     lastSummarizeIndex: 0,
+    scenario,
   };
 }
 
@@ -97,7 +100,7 @@ interface ChatStore {
   removeSession: (index: number) => void;
   moveSession: (from: number, to: number) => void;
   selectSession: (index: number) => void;
-  newSession: () => void;
+  newSession: (scenario?: Scenario) => void;
   deleteSession: (index?: number) => void;
   currentSession: () => ChatSession;
   onNewMessage: (message: Message) => void;
@@ -193,10 +196,10 @@ export const useChatStore = create<ChatStore>()(
         });
       },
 
-      newSession() {
+      newSession(scenario?: Scenario) {
         set((state) => ({
           currentSessionIndex: 0,
-          sessions: [createEmptySession()].concat(state.sessions),
+          sessions: [createEmptySession(scenario)].concat(state.sessions),
         }));
       },
 
@@ -250,10 +253,12 @@ export const useChatStore = create<ChatStore>()(
       },
 
       async getFeedback(messages) {
+        let scenario = get().currentSession().scenario;
         const res = await fetch("/api/score", {
           method: "POST",
           body: JSON.stringify({
             messages,
+            scenario,
           }),
         });
         const json = await res.json();

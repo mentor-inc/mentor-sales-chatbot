@@ -98,7 +98,11 @@ export function ChatList(props: { narrow?: boolean }) {
           >
             {sessions.map((item, i) => (
               <ChatItem
-                title={item.topic}
+                title={
+                  item.scenario === "pm"
+                    ? "People Manager"
+                    : "Relationship Manager"
+                }
                 time={item.lastUpdate}
                 count={item.messages.length}
                 key={item.id}

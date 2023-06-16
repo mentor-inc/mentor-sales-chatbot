@@ -6,7 +6,6 @@ import { IconButton } from "./button";
 import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
 import CloseIcon from "../icons/close.svg";
-import ShareIcon from "../icons/share.svg";
 import Locale from "../locales";
 
 import { useAppConfig, useChatStore } from "../store";
@@ -139,7 +138,7 @@ export function SideBar(props: { className?: string }) {
             icon={<AddIcon />}
             text={shouldNarrow ? undefined : Locale.Home.NewChat}
             onClick={() => {
-              showModal({
+              let closeModal = showModal({
                 title: "Select scenario",
                 children: (
                   <div
@@ -149,19 +148,31 @@ export function SideBar(props: { className?: string }) {
                       gap: 12,
                     }}
                   >
-                    <Scenario title="Relationship Manager">
+                    <Scenario
+                      title="Relationship Manager"
+                      onSelect={() => {
+                        chatStore.newSession("rm");
+                        takeSimCount();
+                        closeModal();
+                      }}
+                    >
                       You are a Relationship Manager. Answer your client
                       inquiries.
                     </Scenario>
-                    <Scenario title="People Manager">
+                    <Scenario
+                      title="People Manager"
+                      onSelect={() => {
+                        chatStore.newSession("pm");
+                        takeSimCount();
+                        closeModal();
+                      }}
+                    >
                       You are a People Manager. Communicate performance review
                       results to your direct report.
                     </Scenario>
                   </div>
                 ),
               });
-              // chatStore.newSession();
-              // takeSimCount();
             }}
             shadow
           />
